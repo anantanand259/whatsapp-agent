@@ -12,10 +12,11 @@ export function config(env = process.env) {
     maxSteps: Number(env.MAX_AGENT_STEPS || 16), graph: env.META_GRAPH_VERSION || '',
     metaToken: env.META_ACCESS_TOKEN || '', phoneId: env.META_PHONE_NUMBER_ID || '',
     appSecret: env.META_APP_SECRET || '', verifyToken: env.META_VERIFY_TOKEN || '',
-    githubToken: env.GITHUB_TOKEN || '', repo: env.GITHUB_REPOSITORY || '',
+    githubToken: env.GITHUB_TOKEN || '', githubAuth: env.GITHUB_AUTH || 'token', repo: env.GITHUB_REPOSITORY || '',
     branch: env.GITHUB_BRANCH || 'agent-work'
   };
   if (!['local', 'personal', 'whatsapp'].includes(c.mode)) throw new Error('MODE must be local, personal or whatsapp');
+  if (!['token', 'credential-manager'].includes(c.githubAuth)) throw new Error('GITHUB_AUTH must be token or credential-manager');
   if (![...c.owners, ...c.recipients, ...c.autoReply].every(n => /^[1-9][0-9]{6,14}$/.test(n))) throw new Error('Phone numbers must be international digits without + or spaces');
   if (!Number.isInteger(c.maxSteps) || c.maxSteps < 1 || c.maxSteps > 40) throw new Error('MAX_AGENT_STEPS must be 1-40');
   if (!Number.isInteger(c.port) || c.port < 1 || c.port > 65535) throw new Error('Invalid PORT');

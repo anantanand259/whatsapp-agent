@@ -1,13 +1,16 @@
 import { jsonRequest } from './http.js';
 import { safeName } from './artifacts.js';
+import { githubCredential } from './credentials.js';
 
 export class GitHub {
-  constructor(c, request = jsonRequest) { this.c = c; this.request = request; }
+  constructor(c, request = jsonRequest, credential = githubCredential) { this.c = c; this.request = request; this.credential = credential; }
   async api(route, method = 'GET', data) {
     const c = this.c;
-    if (!c.githubToken || !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(c.repo)) throw new Error('Configure GITHUB_TOKEN and GITHUB_REPOSITORY first');
+    if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(c.repo)) throw new Error('Configure GITHUB_REPOSITORY first');
+    const token = c.githubToken || (c.githubAuth === 'credential-manager' ? await this.credential() : '');
+    if (!token) throw new Error('Configure GITHUB_TOKEN or GITHUB_AUTH=credential-manager first');
     return this.request(`https://api.github.com/repos/${c.repo}${route}`, {
-      method, headers: { Authorization: `Bearer ${c.githubToken}`, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', 'Content-Type': 'application/json' },
+      method, headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', 'Content-Type': 'application/json' },
       ...(data ? { body: JSON.stringify(data) } : {})
     });
   }

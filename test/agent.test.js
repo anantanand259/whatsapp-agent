@@ -164,6 +164,25 @@ test('GitHub uses a single commit and never force pushes over a concurrent updat
   assert.equal(requests.filter(r => r.url.includes('/git/refs/')).length, 1);
 });
 
+test('GitHub can reuse Credential Manager without a token in configuration', async t => {
+  const { c } = await fixture(t, { repo: 'owner/repo', githubAuth: 'credential-manager' });
+  const github = new GitHub(c, async (url, options) => {
+    assert.equal(url, 'https://api.github.com/repos/owner/repo');
+    assert.equal(options.headers.Authorization, 'Bearer test-credential');
+    return { permissions: { push: true } };
+  }, async () => 'test-credential');
+  assert.equal((await github.api('')).permissions.push, true);
+  assert.equal(c.githubToken, '');
+});
+
+test('GitHub does not retrieve credentials for an invalid repository', async t => {
+  const { c } = await fixture(t, { repo: '../bad/repo', githubAuth: 'credential-manager' });
+  let lookups = 0;
+  const github = new GitHub(c, async () => {}, async () => { lookups++; return 'token'; });
+  await assert.rejects(github.api(''), /GITHUB_REPOSITORY/);
+  assert.equal(lookups, 0);
+});
+
 test('bad tool arguments produce a tool error without performing the action', async t => {
   const { c, store } = await fixture(t); let turn = 0; let sent = false;
   const model = { respond: async input => {

@@ -35,7 +35,7 @@ GITHUB_TOKEN=YOUR_FINE_GRAINED_TOKEN
 
 Use a Responses API model supporting function calling. AI API usage is billed separately from a chat subscription. The code uses [OpenAI function calling](https://developers.openai.com/api/docs/guides/function-calling) and sends task prompts and requested chat content to the configured model with `store: false`; this is not a promise of zero provider retention.
 
-`GITHUB_TOKEN` is optional until you request a push. Grant a fine-grained token access only to this repository with Contents read/write. Initialize the repository and create the `agent-work` branch before requesting generated-file commits. The branch is explicit: the agent will not fall back to modifying your default branch. It uses GitHub's Git data API to make one commit containing all selected files and advances the branch without force.
+`GITHUB_TOKEN` is optional until you request a push. Grant a fine-grained token access only to this repository with Contents read/write. On this Windows computer, `GITHUB_AUTH=credential-manager` is already configured to reuse the existing Git for Windows sign-in without storing a token in `.env`. That sign-in may have broader access; this app still restricts requests to the configured repository. The repository and `agent-work` branch have been created. The branch is explicit: the agent will not fall back to modifying your default branch. It uses GitHub's Git data API to make one commit containing all selected files and advances the branch without force.
 
 ```powershell
 npm.cmd run doctor
@@ -119,9 +119,9 @@ This adapter only sends inside the recipient's 24-hour reply window. Approved-te
 
 ## Verification in the Build Environment
 
-16 automated tests passed; the symbolic-link test was skipped because the Windows sandbox forbids creating links. The offline demo produced valid Office archives. The dependency audit reported zero known vulnerabilities after overriding Puppeteer to 25.12.0, image-size to 2.0.4 and basic-ftp to 6.2.2. These overrides require rechecking when upgrading whatsapp-web.js or pptxgenjs.
+All 19 automated tests passed outside the Windows sandbox, including symbolic-link and HTTP checks. The offline demo produced valid Office archives. The dependency audit reported zero known vulnerabilities after overriding Puppeteer to 25.12.0, image-size to 2.0.4 and basic-ftp to 6.2.2. These overrides require rechecking when upgrading whatsapp-web.js or pptxgenjs.
 
-The WhatsApp client and Puppeteer modules loaded successfully. A Chrome launch attempt exited with code 2147483651 in the build environment, so QR login and compatibility with live WhatsApp remain unverified. Start the agent from your own terminal for pairing; a successful offline test does not establish a working WhatsApp session.
+The WhatsApp client and Puppeteer modules loaded successfully. Chrome startup succeeded outside the sandbox. The source upload succeeded, and the runtime GitHub adapter verified write permission and the configured branch. QR login and live AI/WhatsApp operation remain unverified because the local owner number and AI key have not yet been configured.
 
 ## Source Layout
 
