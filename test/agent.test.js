@@ -9,7 +9,7 @@ import { config } from '../src/config.js';
 import { Store } from '../src/store.js';
 import { Artifacts, safeName } from '../src/artifacts.js';
 import { WhatsApp, validSignature, incoming } from '../src/whatsapp.js';
-import { selfCommand, PersonalWhatsApp } from '../src/personal.js';
+import { selfCommand, PersonalWhatsApp, qrSvg } from '../src/personal.js';
 import { GitHub } from '../src/github.js';
 import { Agent } from '../src/agent.js';
 import { Worker } from '../src/worker.js';
@@ -83,6 +83,12 @@ test('Cloud parsing excludes other phone accounts and invalid timestamps', () =>
   assert.equal(incoming(payload, '123')[0].body, 'Hello');
   payload.entry[0].changes[0].value.messages[0].timestamp = 'NaN';
   assert.equal(incoming(payload, '123').length, 0);
+});
+
+test('pairing QR renders as geometry without embedding raw input', () => {
+  const svg = qrSvg('pairing-test-data');
+  assert.match(svg, /<svg/); assert.match(svg, /shape-rendering="crispEdges"/);
+  assert.doesNotMatch(svg, /pairing-test-data/);
 });
 
 test('only prefixed self-chat messages can control the personal account', () => {

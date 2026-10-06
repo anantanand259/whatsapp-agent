@@ -1,5 +1,21 @@
 import path from 'node:path';
+import fs from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import { WhatsApp } from './whatsapp.js';
+
+const require = createRequire(import.meta.url);
+const QRCode = require('qrcode-terminal/vendor/QRCode');
+const qrLevel = require('qrcode-terminal/vendor/QRCode/QRErrorCorrectLevel');
+
+export function qrSvg(value) {
+  const code = new QRCode(-1, qrLevel.M); code.addData(value); code.make();
+  const size = code.getModuleCount();
+  const cells = [];
+  for (let row = 0; row < size; row++) for (let col = 0; col < size; col++) {
+    if (code.isDark(row, col)) cells.push(`<rect x="${col + 4}" y="${row + 4}" width="1" height="1"/>`);
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 ${size + 8} ${size + 8}" shape-rendering="crispEdges"><rect width="100%" height="100%" fill="white"/><g fill="black">${cells.join('')}</g></svg>`;
+}
 
 export function selfCommand(message, selfIds, prefix) {
   return Boolean(message.fromMe && selfIds.has(message.to) && typeof message.body === 'string' && message.body.startsWith(`${prefix} `));
@@ -16,9 +32,18 @@ export class PersonalWhatsApp extends WhatsApp {
       qrMaxRetries: 5
     });
     this.ready = false;
-    this.client.on('qr', value => {
+    this.client.on('qr', async value => {
       console.log('WhatsApp > Settings > Linked devices > Link a device. Scan this QR:');
       qr.generate(value, { small: true });
+      let page;
+      try {
+        page = await this.client.pupBrowser.newPage();
+        await page.setViewport({ width: 600, height: 600, deviceScaleFactor: 1 });
+        await page.setContent(`<body style="margin:0">${qrSvg(value)}</body>`);
+        await page.screenshot({ path: path.join(this.c.dataDir, 'whatsapp-qr.png') });
+        console.log(`QR_IMAGE_UPDATED ${new Date().toISOString()}`);
+      } catch { console.error('Could not render the QR image; use the terminal QR.'); }
+      finally { if (page) await page.close().catch(() => {}); }
     });
     this.client.on('ready', async () => {
       try {
@@ -29,6 +54,7 @@ export class PersonalWhatsApp extends WhatsApp {
         const mappings = await this.client.getContactLidAndPhone([`${number}@c.us`]);
         for (const m of mappings) { if (m.lid) this.selfIds.add(m.lid); }
         this.ready = true;
+        await fs.unlink(path.join(this.c.dataDir, 'whatsapp-qr.png')).catch(() => {});
         console.log(`WhatsApp connected. In Message yourself, send: ${this.c.prefix} Create a document about solar energy`);
       } catch (e) { console.error(e.message); await this.client.destroy(); }
     });

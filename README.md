@@ -119,9 +119,9 @@ This adapter only sends inside the recipient's 24-hour reply window. Approved-te
 
 ## Verification in the Build Environment
 
-All 19 automated tests passed outside the Windows sandbox, including symbolic-link and HTTP checks. The offline demo produced valid Office archives. The dependency audit reported zero known vulnerabilities after overriding Puppeteer to 25.12.0, image-size to 2.0.4 and basic-ftp to 6.2.2. These overrides require rechecking when upgrading whatsapp-web.js or pptxgenjs.
+All 20 automated tests passed outside the Windows sandbox, including QR rendering, symbolic-link and HTTP checks. The offline demo produced valid Office archives. The dependency audit reported zero known vulnerabilities after overriding Puppeteer to 25.12.0, image-size to 2.0.4 and basic-ftp to 6.2.2. These overrides require rechecking when upgrading whatsapp-web.js or pptxgenjs.
 
-The WhatsApp client and Puppeteer modules loaded successfully. Chrome startup succeeded outside the sandbox. The source upload succeeded, and the runtime GitHub adapter verified write permission and the configured branch. QR login and live AI/WhatsApp operation remain unverified because the local owner number and AI key have not yet been configured.
+The WhatsApp client and Puppeteer modules loaded successfully. Chrome startup succeeded outside the sandbox and a WhatsApp pairing QR was generated. The source upload succeeded, and the runtime GitHub adapter verified write permission and the configured branch. A live AI test returned `credit_balance_exhausted`; billing must be resolved before AI tasks can run. QR login and live AI/WhatsApp task completion remain unverified.
 
 ## Source Layout
 
