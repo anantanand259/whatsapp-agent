@@ -175,6 +175,17 @@ test('bad tool arguments produce a tool error without performing the action', as
   assert.equal(sent, false);
 });
 
+test('model retries with different call IDs cannot repeat an uncertain delivery', async t => {
+  const { c, store } = await fixture(t, { mode: 'personal', owners: ['919876543210'] });
+  let sends = 0;
+  const channel = new PersonalWhatsApp(c, store); channel.ready = true;
+  channel.client = { getNumberId: async () => ({ _serialized: '919876543210@c.us' }), sendMessage: async () => { sends++; throw new Error('timeout after send'); } };
+  const agent = new Agent(c, store, channel);
+  const context = { job: { id: 'same-task', sender: '919876543210' }, artifacts: new Artifacts(c.dataDir, 'same-task') };
+  for (const key of ['call-1', 'call-2']) await assert.rejects(agent.execute('send_message', { to: '919876543210', text: 'Hello' }, { ...context, key }));
+  assert.equal(sends, 1);
+});
+
 test('webhook verification, signatures and deduplication work over HTTP', async t => {
   const { c, store } = await fixture(t, { mode: 'whatsapp', appSecret: 'test-secret', verifyToken: 'verify', phoneId: '123' });
   const server = createServer(c, store, { drain: async () => {} });

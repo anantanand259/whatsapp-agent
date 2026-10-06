@@ -1,4 +1,5 @@
 import Ajv from 'ajv';
+import { createHash } from 'node:crypto';
 import { Artifacts } from './artifacts.js';
 import { GitHub } from './github.js';
 import { jsonRequest } from './http.js';
@@ -83,16 +84,24 @@ For current facts say that research must be verified. Do not fabricate sources. 
     }
     throw new Error('Agent step limit reached. Generated files are retained; request a smaller task.');
   }
-  async execute(name, a, { job, artifacts, key }) {
+  async execute(name, a, { job, artifacts }) {
+    const stableKey = suffix => `${job.id}:${name}:${createHash('sha256').update(JSON.stringify(a)).update(suffix || '').digest('hex')}`;
     switch (name) {
       case 'write_file':
         if (/\.(docx|pptx)$/i.test(a.filename)) throw new Error('Use the document/presentation tool for binary formats');
         return artifacts.write(a.filename, a.content);
       case 'create_document': return artifacts.document(a);
       case 'create_presentation': return artifacts.presentation(a);
-      case 'send_file': return this.channel.file(key, job.sender, a.filename, await artifacts.read(a.filename));
-      case 'send_message': return this.channel.text(key, a.to, a.text);
-      case 'push_github': return this.store.effect(key, () => this.github.push(artifacts, a.files, a.message));
+      case 'send_file': {
+        const bytes = await artifacts.read(a.filename);
+        return this.channel.file(stableKey(bytes), job.sender, a.filename, bytes);
+      }
+      case 'send_message': return this.channel.text(stableKey(), a.to, a.text);
+      case 'push_github': {
+        const digest = createHash('sha256');
+        for (const file of a.files) digest.update(file).update(await artifacts.read(file));
+        return this.store.effect(stableKey(digest.digest('hex')), () => this.github.push(artifacts, a.files, a.message));
+      }
       case 'list_chats': return this.channel.chats ? this.channel.chats() : this.store.inbox();
       case 'read_chat': return this.channel.readChat ? this.channel.readChat(a.chat_id) : this.store.history(a.chat_id);
       default: throw new Error('Unknown tool');

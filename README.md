@@ -117,13 +117,13 @@ This adapter only sends inside the recipient's 24-hour reply window. Approved-te
 - Set AI account budget limits. Tasks are capped at 16 model rounds by default.
 - Local messages, generated files and session data are not encrypted by this app. Use OS disk encryption and protect local access.
 
-## Source Layout
+## Verification in the Build Environment
 
-### Verification in the build environment
-
-15 automated tests passed; the symbolic-link test was skipped because the Windows sandbox forbids creating links. The offline demo produced valid Office archives. The dependency audit reported zero known vulnerabilities after overriding Puppeteer to 25.12.0, image-size to 2.0.4 and basic-ftp to 6.2.2. These overrides require rechecking when upgrading whatsapp-web.js or pptxgenjs.
+16 automated tests passed; the symbolic-link test was skipped because the Windows sandbox forbids creating links. The offline demo produced valid Office archives. The dependency audit reported zero known vulnerabilities after overriding Puppeteer to 25.12.0, image-size to 2.0.4 and basic-ftp to 6.2.2. These overrides require rechecking when upgrading whatsapp-web.js or pptxgenjs.
 
 The WhatsApp client and Puppeteer modules loaded successfully. A Chrome launch attempt exited with code 2147483651 in the build environment, so QR login and compatibility with live WhatsApp remain unverified. Start the agent from your own terminal for pairing; a successful offline test does not establish a working WhatsApp session.
+
+## Source Layout
 
 - `src/personal.js`: QR linking, self-chat commands, chat reads and personal-account sends.
 - `src/agent.js`: AI function-calling loop and tool validation.
